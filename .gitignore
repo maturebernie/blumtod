@@ -4,7 +4,8 @@
 !bot.py
 *.html
 *.txt
-!data.txt
+agents.txt
+data.txt
 *.js
 env
 session
@@ -15,7 +16,7 @@ flows*
 *-*
 disin
 !config.json
-!proxies.txt
+proxies.txt
 !requirements.txt
 1
 2
