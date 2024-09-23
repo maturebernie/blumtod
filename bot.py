@@ -38,6 +38,7 @@ magenta = Fore.LIGHTMAGENTA_EX
 line = white + "~" * 50
 log_file = "http.log"
 proxy_file = "proxies.txt"
+agent_file = "agents.txt"
 data_file = "data.txt"
 config_file = "config.json"
 
@@ -52,10 +53,11 @@ class Config:
 
 
 class BlumTod:
-    def __init__(self, id, query, proxies, config: Config):
+    def __init__(self, id, query, proxies, agents, config: Config):
         self.p = id
         self.query = query
         self.proxies = proxies
+        self.agents = agents
         self.cfg = config
         self.valid = True
         parser = {key: value[0] for key, value in parse_qs(query).items()}
@@ -86,6 +88,8 @@ class BlumTod:
             "accept-encoding": "gzip, deflate",
             "accept-language": "en,en-US;q=0.9",
         }
+        self.headers["user-agent"] = self.agents[id % len(self.agents)]
+
 
     def log(self, msg):
         now = datetime.now().isoformat().split("T")[1].split(".")[0]
@@ -410,14 +414,17 @@ async def countdown(t):
         await asyncio.sleep(1)
 
 
-async def get_data(data_file, proxy_file):
+async def get_data(data_file, proxy_file, agent_file):
     async with aiofiles.open(data_file) as w:
         read = await w.read()
         datas = [i for i in read.splitlines() if len(i) > 10]
     async with aiofiles.open(proxy_file) as w:
         read = await w.read()
         proxies = [i for i in read.splitlines() if len(i) > 5]
-    return datas, proxies
+    async with aiofiles.open(agent_file) as w:
+        read = await w.read()
+        agents = [i for i in read.splitlines() if len(i) > 5]
+    return datas, proxies, agents
 
 
 async def main():
@@ -433,6 +440,12 @@ async def main():
         "-D",
         default=data_file,
         help=f"Perform custom input for data files (default: {data_file})",
+    )
+    arg.add_argument(
+        "--agent",
+        "-U",
+        default=agent_file,
+        help=f"Perform custom input for user agent files (default : {agent_file})",
     )
     arg.add_argument(
         "--proxy",
@@ -483,11 +496,12 @@ async def main():
                 low=int(cfg.get("low", 240)),
                 high=int(cfg.get("high", 250)),
             )
-        datas, proxies = await get_data(data_file=args.data, proxy_file=args.proxy)
+        datas, proxies, agents = await get_data(args.data, args.proxy, args.agent)
         menu = f"""
 {white}data file :{green} {args.data}
 {white}proxy file :{green} {args.proxy}
 {green}total data :{white} {len(datas)}
+{white}user agent file :{green} {args.agent}
 {green}total proxy :{white} {len(proxies)}
 
     {green}1{white}.{green}) {white}set on/off auto claim ({(green + "active" if config.auto_claim else red + "non-active")})
@@ -497,6 +511,9 @@ async def main():
     {green}5{white}.{green}) {white}start bot (multiprocessing)
     {green}6{white}.{green}) {white}start bot (sync mode)
         """
+
+        args.action = '6'
+
         opt = None
         if args.action:
             opt = args.action
@@ -552,7 +569,7 @@ async def main():
                     return await BlumTod(*params).start()
 
             while True:
-                datas, proxies = await get_data(args.data, args.proxy)
+                datas, proxies, agents = await get_data(args.data, args.proxy, args.agent)
                 tasks = [
                     asyncio.create_task(bound(sema, (no, data, proxies, config)))
                     for no, data in enumerate(datas)
@@ -563,13 +580,14 @@ async def main():
                 await countdown(total)
         if opt == "6":
             while True:
-                datas, proxies = await get_data(args.data, args.proxy)
+                datas, proxies, agents = await get_data(args.data, args.proxy, args.agent)
                 result = []
                 for no, data in enumerate(datas):
                     res = await BlumTod(
-                        id=no, query=data, proxies=proxies, config=config
+                        id=no, query=data, proxies=proxies, agents=agents, config=config
                     ).start()
                     result.append(res)
+                    await countdown(random.randint(30, 180))
                 end = int(datetime.now().timestamp())
                 total = min(result) - end
                 await countdown(total)
