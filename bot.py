@@ -404,6 +404,7 @@ class BlumTod:
 
 
 async def countdown(t):
+    print(f"need to wait for {t} secs ")
     for i in range(t, 0, -1):
         minute, seconds = divmod(i, 60)
         hour, minute = divmod(minute, 60)
@@ -589,7 +590,8 @@ async def main():
                     result.append(res)
                     await countdown(random.randint(30, 180))
                 end = int(datetime.now().timestamp())
-                total = min(result) - end
+                # total = min(result) - end
+                total = random.randint(10800, 10830)
                 await countdown(total)
 
 
