@@ -382,7 +382,9 @@ class BlumTod:
                 if message:
                     return
                 task_status = _res.json().get("status")
-                continue
+                # 这里的continue不应该存在，应该改为return，不然会一直循环
+                # continue
+                return 
             if validation_type == "KEYWORD" or task_status == "READY_FOR_VERIFY":
                 verify_url = (
                     f"https://earn-domain.blum.codes/api/v1/tasks/{task_id}/validate"
@@ -400,7 +402,9 @@ class BlumTod:
                 if message:
                     return
                 task_status = res.json().get("status")
-                continue
+                # 这里的continue不应该存在，应该改为return，不然会一直循环
+                # continue
+                return
 
 
 async def countdown(t):
