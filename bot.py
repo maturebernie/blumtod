@@ -318,6 +318,8 @@ class BlumTod:
                 self.log(f"{green}you have {white}{play}{green} game ticket")
                 if play <= 0:
                     break
+                # 这里永远设置play = 1，免得重复请求，困死在下面的for循环里
+                play = 1
                 for i in range(play):
                     if self.is_expired(self.headers.get("authorization").split(" ")[1]):
                         await self.login()
@@ -342,8 +344,9 @@ class BlumTod:
                             )
                             break
                         message = res.json().get("message", "")
-                        if message == "game session not finished":
-                            continue
+                        # 保险起见，这里也不要重试，重试了就会有问题，下面的if判断去掉，不要continue了
+                        # if message == "game session not finished":
+                        #     continue
                         self.log(f"{red}failed earn {white}{point}{red} from game !")
                         break
         res = await self.http(balance_url, self.headers)
