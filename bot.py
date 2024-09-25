@@ -71,6 +71,7 @@ class BlumTod:
         self.user = {"id": uid, "first_name": first_name}
         if len(self.proxies) > 0:
             proxy = self.get_random_proxy(id, False)
+            self.log(f"{green}using proxy {proxy}")
             transport = AsyncProxyTransport.from_url(proxy)
             self.ses = httpx.AsyncClient(transport=transport, timeout=1000)
         else:
@@ -123,6 +124,9 @@ class BlumTod:
         return self.proxies[isself % len(self.proxies)]
 
     async def http(self, url, headers, data=None):
+        # 修改睡眠时间，重试变久 -> 10min
+        sec = 600
+        self.log(f"{green}trying to connect to {url}...{data}")
         while True:
             try:
                 if not await aiofiles.ospath.exists(log_file):
@@ -142,28 +146,29 @@ class BlumTod:
                     await hw.write(f"{res.status_code} {res.text}\n")
                 if "<title>" in res.text:
                     self.log(f"{yellow}failed get json response !")
-                    await countdown(3)
+                    await countdown(sec)
                     continue
 
+                self.log(f"{green} result is {res}")
                 return res
             except (httpx.ProxyError, python_socks._errors.ProxyTimeoutError):
                 proxy = self.get_random_proxy(0, israndom=True)
                 transport = AsyncProxyTransport.from_url(proxy)
                 self.ses = httpx.AsyncClient(transport=transport)
                 self.log(f"{yellow}proxy error,selecting random proxy !")
-                await asyncio.sleep(3)
+                await asyncio.sleep(sec)
                 continue
             except httpx.NetworkError:
                 self.log(f"{yellow}network error !")
-                await asyncio.sleep(3)
+                await asyncio.sleep(sec)
                 continue
             except httpx.TimeoutException:
                 self.log(f"{yellow}connection timeout !")
-                await asyncio.sleep(3)
+                await asyncio.sleep(sec)
                 continue
             except (httpx.RemoteProtocolError, anyio.EndOfStream):
                 self.log(f"{yellow}connection close without response !")
-                await asyncio.sleep(3)
+                await asyncio.sleep(sec)
                 continue
 
     def is_expired(self, token):
