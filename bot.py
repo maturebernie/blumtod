@@ -603,7 +603,7 @@ async def main():
                     await countdown(random.randint(30, 180))
                 end = int(datetime.now().timestamp())
                 # total = min(result) - end
-                total = random.randint(10800, 10830)
+                total = random.randint(10800/4, 10848/4)
                 await countdown(total)
 
 
