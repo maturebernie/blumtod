@@ -234,7 +234,8 @@ class BlumTod:
             if timestamp == 0:
                 timestamp = int(datetime.now().timestamp() * 1000)
             if not timestamp:
-                continue
+                # no need to continue
+                return 
             timestamp = timestamp / 1000
             break
         balance = res.json().get("availableBalance", 0)
@@ -603,7 +604,7 @@ async def main():
                     await countdown(random.randint(30, 180))
                 end = int(datetime.now().timestamp())
                 # total = min(result) - end
-                total = random.randint(10800/4, 10848/4)
+                total = random.randint(10800, 10848)
                 await countdown(total)
 
 
