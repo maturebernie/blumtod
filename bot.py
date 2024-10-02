@@ -208,8 +208,14 @@ class BlumTod:
         farming_claim_url = "https://game-domain.blum.codes/api/v1/farming/claim"
         farming_start_url = "https://game-domain.blum.codes/api/v1/farming/start"
         checkin_url = "https://game-domain.blum.codes/api/v1/daily-reward?offset=-420"
-        if len(self.proxies) > 0:
-            await self.ipinfo()
+        # we should add try catch here, it stops Blum from executing many times
+        try:
+            if len(self.proxies) > 0:
+                await self.ipinfo()
+        except Exception as e:
+            self.log(f"{red}error when getting ip [new try catch]!")
+            return None
+        
         uid = self.user.get("id")
         first_name = self.user.get("first_name")
         self.log(f"{green}login as {white}{first_name}")
